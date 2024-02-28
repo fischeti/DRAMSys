@@ -53,6 +53,8 @@ MemoryManager::~MemoryManager()
             tlm_generic_payload* payload = innerBuffer.second.top();
             if (storageEnabled)
                 delete[] payload->get_data_ptr();
+            if (payload->get_byte_enable_ptr())
+                delete[] payload->get_byte_enable_ptr();
             payload->reset();
             delete payload;
             innerBuffer.second.pop();
@@ -92,5 +94,9 @@ tlm_generic_payload& MemoryManager::allocate(unsigned dataLength)
 void MemoryManager::free(tlm_generic_payload* payload)
 {
     unsigned dataLength = payload->get_data_length();
+    if (payload->get_byte_enable_ptr()){
+        delete[] payload->get_byte_enable_ptr();
+        payload->set_byte_enable_ptr(nullptr);
+    }
     freePayloads[dataLength].push(payload);
 }

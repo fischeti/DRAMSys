@@ -111,6 +111,24 @@ Dram::~Dram()
         free(memory);
 }
 
+unsigned char * Dram::getDramBasePointer()
+{
+    return memory;
+}
+
+void Dram::preloadByteInDram(uint64_t addr, unsigned char data)
+{
+    unsigned char *phyAddr = memory + addr;
+    *phyAddr = data;
+}
+
+unsigned char Dram::checkByte(uint64_t addr)
+{
+    unsigned char *phyAddr = memory + addr;
+    unsigned char check_data = *phyAddr;
+    return check_data;
+}
+
 void Dram::reportPower()
 {
 #ifdef DRAMPOWER

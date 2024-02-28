@@ -71,6 +71,9 @@ public:
 
     const Configuration& getConfig() const;
     const AddressDecoder& getAddressDecoder() const { return *addressDecoder; }
+    unsigned char * getDramBasePointer();
+    void preloadByte(uint64_t addr, unsigned char data);
+    unsigned char checkByte(uint64_t addr);
 
     /**
      * Returns true if all memory controllers are in idle state.

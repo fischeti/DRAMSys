@@ -126,6 +126,40 @@ const Configuration& DRAMSys::getConfig() const
     return config;
 }
 
+unsigned char * DRAMSys::getDramBasePointer()
+{
+    unsigned char * ptr = nullptr;
+    for (auto& dram : drams)
+        ptr = dram->getDramBasePointer();
+    return ptr;
+}
+
+void DRAMSys::preloadByte(uint64_t addr, unsigned char data)
+{
+    if (config.storeMode == Configuration::StoreMode::Store )
+    {
+        // uint64_t phy_addr = addressDecoder->decodeAddress(addr);
+        for (auto& dram : drams)
+            dram->preloadByteInDram(addr,data);
+    }else{
+        SC_REPORT_FATAL(this->name(), "Storage not configured!");
+    }
+
+}
+
+unsigned char DRAMSys::checkByte(uint64_t addr)
+{
+    if (config.storeMode == Configuration::StoreMode::Store )
+    {
+        // uint64_t phy_addr = addressDecoder->decodeAddress(addr);
+        for (auto& dram : drams)
+            return dram->checkByte(addr);
+    }else{
+        SC_REPORT_FATAL(this->name(), "Storage not configured!");
+    }
+    return 0;
+}
+
 void DRAMSys::end_of_simulation()
 {
     if (config.powerAnalysis)

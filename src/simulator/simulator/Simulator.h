@@ -37,6 +37,7 @@
 
 #include "Initiator.h"
 #include "MemoryManager.h"
+#include "dramsys_conv.h"
 
 #include <DRAMSys/config/DRAMSysConfiguration.h>
 #include <DRAMSys/simulation/DRAMSysRecordable.h>

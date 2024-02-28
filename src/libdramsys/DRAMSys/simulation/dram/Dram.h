@@ -88,6 +88,9 @@ public:
 
     tlm_utils::simple_target_socket<Dram> tSocket;
 
+    unsigned char * getDramBasePointer();
+    void preloadByteInDram(uint64_t addr, unsigned char data);
+    unsigned char checkByte(uint64_t addr);
     virtual void reportPower();
 
     void serialize(std::ostream& stream) const override;
