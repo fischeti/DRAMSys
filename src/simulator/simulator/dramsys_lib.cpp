@@ -8,12 +8,13 @@
 
 std::vector<uint64_t>                               list_of_DRAMburst;
 std::vector<uint64_t>                               list_of_DRAMsize;
+std::vector<uint64_t>                               list_of_DRAMBase;
 std::vector<DRAMSys::DRAMSys *>                     list_of_DRAMsys;
 std::vector<dramsys_conv *>                         list_of_conv;
 std::vector<uint8_t *>                              list_of_wbuffer;
 std::vector<uint8_t *>                              list_of_wstrobe;
 
-extern "C" int add_dram(char * resources_path, char * simulationJson_path){
+extern "C" int add_dram(char * resources_path, char * simulationJson_path, uint64_t dram_base){
 
     static int id = 0;
 
@@ -70,6 +71,7 @@ extern "C" int add_dram(char * resources_path, char * simulationJson_path){
     list_of_DRAMsys.push_back(dramSys);
     list_of_conv.push_back(conv);
     list_of_DRAMsize.push_back(dramChannelSize);
+    list_of_DRAMBase.push_back(dram_base);
     list_of_DRAMburst.push_back(dramMaxBurstByte);
 
     uint8_t* wbuffer_ptr = new uint8_t [2048];
@@ -181,26 +183,33 @@ extern "C" void close_dram(int dram_id) {
 
 
 extern "C" void dram_preload_byte(int dram_id, uint64_t dram_addr_ofst, int byte_int) {
-    // std::cout << "Load byte " << byte_int << ", in addr "<<dram_addr_ofst <<", DRAM id " << dram_id << std::endl;
     list_of_DRAMsys[dram_id]->preloadByte(dram_addr_ofst,byte_int);
 }
 
 extern "C" int dram_check_byte(int dram_id, uint64_t dram_addr_ofst) {
-    // std::cout << "Load byte " << byte_int << ", in addr "<<dram_addr_ofst <<", DRAM id " << dram_id << std::endl;
     return list_of_DRAMsys[dram_id]->checkByte(dram_addr_ofst);
 }
 
 extern "C" int check_symbol(int dram_id, const char* sym) {
     uint64_t symbol_ptr = elf_get_symbol_addr(sym);
     int value = 0;
+    uint64_t dram_addr_offset = list_of_DRAMBase[dram_id];
     for (int i = 0; i < 4; i++)
     {
-        value |= list_of_DRAMsys[dram_id]->checkByte(symbol_ptr + i) << (i*8);
+        value |= list_of_DRAMsys[dram_id]->checkByte(symbol_ptr + i - dram_addr_offset) << (i*8);
     }
     return value;
 }
 
-extern "C" void dram_load_elf(int dram_id, uint64_t dram_base_addr, char * elf_path) {
+extern "C" void write_symbol(int dram_id, const char* sym, int value) {
+    uint64_t symbol_ptr = elf_get_symbol_addr(sym);
+    uint64_t dram_addr_offset = list_of_DRAMBase[dram_id];
+    for (int i = 0; i < 4; i++) {
+        list_of_DRAMsys[dram_id]->preloadByte(symbol_ptr + i - dram_addr_offset, (value >> (i*8)) & 0xFF);
+    }
+}
+
+extern "C" void dram_load_elf(int dram_id, uint64_t, char * elf_path) {
     std::string app_binary;
     app_binary = elf_path;
     std::ifstream f(app_binary.c_str());
@@ -211,12 +220,11 @@ extern "C" void dram_load_elf(int dram_id, uint64_t dram_base_addr, char * elf_p
     }
     if (f.good())
     {
-        elfloader_read_elf(app_binary.c_str(), list_of_DRAMsize[dram_id], dram_base_addr, list_of_DRAMsys[dram_id]->getDramBasePointer());
+        elfloader_read_elf(app_binary.c_str(), list_of_DRAMsize[dram_id], list_of_DRAMBase[dram_id], list_of_DRAMsys[dram_id]->getDramBasePointer());
         std::cout << "Load elf file [" << app_binary << "] in DRAM id " << dram_id << std::endl;
     } else {
         std::cout << "Can not Load elf file [" << app_binary << "] in DRAM id " << dram_id << " : File not found"<< std::endl;
     }
-
 }
 
 extern "C" void dram_load_memfile(int dram_id, uint64_t addr_ofst, char * mem_path){
