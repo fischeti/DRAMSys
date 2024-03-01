@@ -34,6 +34,27 @@
 #define IS_ELF_EM_NONE(hdr) (IS_ELF(hdr) && (hdr).e_machine == EM_NONE)
 #define IS_ELF_VCURRENT(hdr) (IS_ELF(hdr) && (hdr).e_version == EV_CURRENT)
 
+static inline uint8_t swap(uint8_t n) { return n; }
+static inline uint16_t swap(uint16_t n) { return (n >> 8) | (n << 8); }
+static inline uint32_t swap(uint32_t n) { return (swap(uint16_t(n)) << 16) | swap(uint16_t(n >> 16)); }
+static inline uint64_t swap(uint64_t n) { return (uint64_t(swap(uint32_t(n))) << 32) | swap(uint32_t(n >> 32)); }
+static inline int8_t swap(int8_t n) { return n; }
+static inline int16_t swap(int16_t n) { return int16_t(swap(uint16_t(n))); }
+static inline int32_t swap(int32_t n) { return int32_t(swap(uint32_t(n))); }
+static inline int64_t swap(int64_t n) { return int64_t(swap(uint64_t(n))); }
+
+#ifdef WORDS_BIGENDIAN
+template<typename T> static inline T from_be(T n) { return n; }
+template<typename T> static inline T to_be(T n) { return n; }
+template<typename T> static inline T from_le(T n) { return swap(n); }
+template<typename T> static inline T to_le(T n) { return swap(n); }
+#else
+template<typename T> static inline T from_le(T n) { return n; }
+template<typename T> static inline T to_le(T n) { return n; }
+template<typename T> static inline T from_be(T n) { return swap(n); }
+template<typename T> static inline T to_be(T n) { return swap(n); }
+#endif
+
 #define PT_LOAD 1
 
 #define SHT_NOBITS 8
