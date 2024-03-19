@@ -166,6 +166,14 @@ extern "C" int dram_get_read_rsp_byte(int dram_id) {
     return byte_int;
 }
 
+extern "C" int dram_peek_read_rsp_byte(int dram_id, int idx) {
+    return (int)list_of_conv[dram_id]->dram_peek_read_rsp_byte(idx);
+}
+
+extern "C" int dram_pop_read_rsp_byte(int dram_id) {
+    return (int)list_of_conv[dram_id]->dram_pop_read_rsp_byte();
+}
+
 extern "C" void run_ns(int ns) {
     sc_start(ns, SC_NS);
 }

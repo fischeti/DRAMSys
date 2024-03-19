@@ -48,7 +48,7 @@ SC_MODULE(dramsys_conv)
     std::list<req_t>                                  read_req_list;
     std::list<std::pair<req_t, std::queue<uint8_t>>>  out_order_rsp_list;
     std::list<req_t>                                  write_req_list;
-    std::queue<uint8_t>                               read_rsp_queue;
+    std::deque<uint8_t>                               read_rsp_queue;
     std::queue<int>                                   write_rsp_queue;
     int                                               max_pending_req;
     int                                               inflight_read_cnt;
@@ -183,7 +183,7 @@ SC_MODULE(dramsys_conv)
                 {
                     uint8_t byte;
                     byte = oo_queue.front();
-                    read_rsp_queue.push(byte);
+                    read_rsp_queue.push_back(byte);
                     oo_queue.pop();
                 }
                 read_req_list.erase(req_it);
@@ -307,7 +307,7 @@ SC_MODULE(dramsys_conv)
             if (read_rsp_queue.size())
             {
                 buf[i] = read_rsp_queue.front();
-                read_rsp_queue.pop();
+                read_rsp_queue.pop_front();
             } else {
                 buf[i] = 0;
             }
@@ -320,7 +320,31 @@ SC_MODULE(dramsys_conv)
         if (read_rsp_queue.size())
         {
             byte = read_rsp_queue.front();
-            read_rsp_queue.pop();
+            read_rsp_queue.pop_front();
+        } else {
+            byte = 0;
+        }
+        return byte;
+    }
+
+    uint8_t dram_peek_read_rsp_byte(uint32_t index)
+    {
+        uint8_t byte;
+        if (read_rsp_queue.size() > index)
+        {
+            byte = read_rsp_queue.at(index);
+        } else {
+            byte = 0;
+        }
+        return byte;
+    }
+
+    uint8_t dram_pop_read_rsp_byte() {
+        uint8_t byte;
+        if (read_rsp_queue.size())
+        {
+            byte = read_rsp_queue.front();
+            read_rsp_queue.pop_front();
         } else {
             byte = 0;
         }
@@ -357,7 +381,3 @@ SC_MODULE(dramsys_conv)
     }
 
 };
-
-
-
-
